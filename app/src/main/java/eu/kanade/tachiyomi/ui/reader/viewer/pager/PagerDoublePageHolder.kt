@@ -67,11 +67,4 @@ class PagerDoublePageHolder(
         first.onPageSelected(forward)
         second?.onPageSelected(forward)
     }
-
-    private fun process(page: ReaderPage, imageSource: BufferedSource): BufferedSource {
-        val isDoublePage = ImageUtil.isWideImage(imageSource)
-        if (isDoublePage) {
-            return imageSource
-        }
-    }
 }
