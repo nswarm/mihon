@@ -151,6 +151,7 @@ object SettingsReaderScreen : SearchableSettings {
     private fun getPagedGroup(readerPreferences: ReaderPreferences): Preference.PreferenceGroup {
         val navModePref = readerPreferences.navigationModePager()
         val imageScaleTypePref = readerPreferences.imageScaleType()
+        val doublePageViewerPref = readerPreferences.doublePageViewer()
         val dualPageSplitPref = readerPreferences.dualPageSplitPaged()
         val rotateToFitPref = readerPreferences.dualPageRotateToFit()
 
@@ -214,10 +215,19 @@ object SettingsReaderScreen : SearchableSettings {
                     enabled = navMode != 5,
                 ),
                 Preference.PreferenceItem.SwitchPreference(
+                    pref = doublePageViewerPref,
+                    title = stringResource(MR.strings.pref_double_page_viewer),
+                    onValueChanged = {
+                        dualPageSplitPref.set(false)
+                        true
+                    },
+                ),
+                Preference.PreferenceItem.SwitchPreference(
                     pref = dualPageSplitPref,
                     title = stringResource(MR.strings.pref_dual_page_split),
                     onValueChanged = {
                         rotateToFitPref.set(false)
+                        doublePageViewerPref.set(false)
                         true
                     },
                 ),

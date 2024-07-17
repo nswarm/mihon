@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
 import eu.kanade.tachiyomi.ui.reader.model.InsertPage
 import eu.kanade.tachiyomi.ui.reader.model.ReaderChapter
+import eu.kanade.tachiyomi.ui.reader.model.ReaderDoublePage
 import eu.kanade.tachiyomi.ui.reader.model.ReaderPage
 import eu.kanade.tachiyomi.ui.reader.model.ViewerChapters
 import eu.kanade.tachiyomi.ui.reader.viewer.calculateChapterGap
@@ -57,7 +58,11 @@ class PagerViewerAdapter(private val viewer: PagerViewer) : ViewPagerAdapter() {
             // selected as the current chapter when one of those pages is selected.
             val prevPages = chapters.prevChapter.pages
             if (prevPages != null) {
-                newItems.addAll(prevPages.takeLast(2))
+                if (viewer.config.doublePageViewer) {
+                    newItems.addAll(toDoublePages(prevPages.takeLast(4), viewer is R2LPagerViewer))
+                } else {
+                    newItems.addAll(prevPages.takeLast(2))
+                }
             }
         }
 
@@ -84,7 +89,11 @@ class PagerViewerAdapter(private val viewer: PagerViewer) : ViewPagerAdapter() {
                     preprocessed[key]?.let { pages.add(key + 1, it) }
                 }
 
-            newItems.addAll(pages)
+            if (viewer.config.doublePageViewer) {
+                newItems.addAll(toDoublePages(pages, viewer is R2LPagerViewer))
+            } else {
+                newItems.addAll(pages)
+            }
         }
 
         currentChapter = chapters.currChapter
@@ -104,7 +113,11 @@ class PagerViewerAdapter(private val viewer: PagerViewer) : ViewPagerAdapter() {
             // swap more pages.
             val nextPages = chapters.nextChapter.pages
             if (nextPages != null) {
-                newItems.addAll(nextPages.take(2))
+                if (viewer.config.doublePageViewer) {
+                    newItems.addAll(toDoublePages(nextPages.take(4), viewer is R2LPagerViewer))
+                } else {
+                    newItems.addAll(nextPages.take(2))
+                }
             }
         }
 
@@ -138,6 +151,7 @@ class PagerViewerAdapter(private val viewer: PagerViewer) : ViewPagerAdapter() {
     override fun createView(container: ViewGroup, position: Int): View {
         return when (val item = items[position]) {
             is ReaderPage -> PagerPageHolder(readerThemedContext, viewer, item)
+            is ReaderDoublePage -> PagerDoublePageHolder(readerThemedContext, viewer, item)
             is ChapterTransition -> PagerTransitionHolder(readerThemedContext, viewer, item)
             else -> throw NotImplementedError("Holder for ${item.javaClass} not implemented")
         }
@@ -199,5 +213,36 @@ class PagerViewerAdapter(private val viewer: PagerViewer) : ViewPagerAdapter() {
 
     fun refresh() {
         readerThemedContext = viewer.activity.createReaderThemeContext()
+    }
+
+    private fun toDoublePages(items: List<ReaderPage>, isR2L: Boolean): List<ReaderDoublePage> {
+        val doublePages = mutableListOf<ReaderDoublePage>()
+        var wipPage: ReaderDoublePage? = null
+        for (item in items) {
+            if (wipPage != null) {
+                if (item is InsertPage) {
+                    logcat { "INSERT PAGE ${item.number}" }
+                    doublePages.add(wipPage)
+                    wipPage = null
+                    // continue processing this item
+                } else {
+                    logcat { "non INSERT PAGE ${item.number}" }
+                    wipPage.second = item
+                    doublePages.add(wipPage)
+                    wipPage = null
+                    continue
+                }
+            }
+
+            if (item is InsertPage) {
+                doublePages.add(ReaderDoublePage(item, null))
+            } else {
+                wipPage = ReaderDoublePage(item, null)
+            }
+        }
+        if (isR2L) {
+            doublePages.forEach { it.swapPages() }
+        }
+        return doublePages
     }
 }

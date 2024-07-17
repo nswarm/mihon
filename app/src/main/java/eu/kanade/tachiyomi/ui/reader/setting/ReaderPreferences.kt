@@ -75,6 +75,8 @@ class ReaderPreferences(
 
     // region Split two page spread
 
+    fun doublePageViewer() = preferenceStore.getBoolean("pref_double_page_viewer", false)
+
     fun dualPageSplitPaged() = preferenceStore.getBoolean("pref_dual_page_split", false)
 
     fun dualPageInvertPaged() = preferenceStore.getBoolean("pref_dual_page_invert", false)
