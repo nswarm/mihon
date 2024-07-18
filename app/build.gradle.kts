@@ -11,9 +11,7 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-if (gradle.startParameter.taskRequests.toString().contains("Standard")) {
-    apply<com.google.gms.googleservices.GoogleServicesPlugin>()
-}
+
 
 shortcutHelper.setFilePath("./shortcuts.xml")
 
